@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import sqlite3
 import csv
@@ -5,7 +7,6 @@ import sys ## Versioncontrol for raw analysis
 
 import mod_irdbhandler as irdb
 import mod_analysis as rawanalyis
-
 
 db_fzirdb = os.path.join(os.getcwd(), 'db', 'flipper_irdblite.db')
 dir_fzirdb = os.path.join(os.getcwd(), '..', 'Flipper-IRDB')
@@ -17,58 +18,138 @@ if sys.version_info <= (3,9):
     print("Python version found:", sys.version)
     rawanalysis = 0
 
+### simple db ###
+ ## irfile    (category, brand,  file,       md5hash, source,  created,  updated)
+ ## irbutton  (name,     type,   protocol,   address, command, md5hash)    
+ ## ircomment (comment,  md5hash)
+ ## rawbutton (name,     header, binarydata, tail,    bit,     divident, md5hash)
+
+### new db (normalized) ###
+ ## irfile    (categoryid, brandid,  file, md5hashid, source,  created,  updated)
+ ## norm_cat   (categoryid, category)
+ ## norm_brand (brandid, brand)
+ ## norm_md5   (md5hashid, md5hash)
+ ## norm_src   (sourceid, source)
+ ## irbutton  (name, type, protocol, address, command, md5hash)
+ ## norm_prot  (protocolid, protocol)
+ ## ircomment (comment,  md5hash)
+ ## rawbutton (name, header, binarydata, tail, bit, divident, md5hash)
+
 
 
 ## Write parsed items to database
 ######################################
 
-def write2sqlite():
+def create_localirdb(fzirdb):
     try:
-        con = sqlite3.connect(db_fzirdb)    
+        con = sqlite3.connect(fzirdb)    
         cur = con.cursor()
-        cur.execute("DROP TABLE IF EXISTS irfile;")
-        cur.execute("DROP TABLE IF EXISTS irbutton;")
-        cur.execute("DROP TABLE IF EXISTS ircomment;")
-        cur.execute("CREATE TABLE IF NOT EXISTS irfile (category,brand,file,md5hash,source);")
-        cur.execute("CREATE TABLE IF NOT EXISTS irbutton (name,type,protocol,address,command,md5hash);")    
-        cur.execute("CREATE TABLE IF NOT EXISTS ircomment (comment,md5hash);")
-        cur.execute("DROP TABLE IF EXISTS rawbutton;")        
-        if rawanalysis == 1:
-            cur.execute("CREATE TABLE IF NOT EXISTS rawbutton (name,header,binarydata,tail,bit,divident,md5hash);")
 
     except OSError as e:
         print(e)
 
-    print("Getting header and buttons for database",db_fzirdb)
-    for irfile in irdb.get_irfiles(dir_fzirdb):
-        irheader = irdb.get_irdbattibutes(irfile[0])
-        cur.execute(("INSERT INTO irfile VALUES ('{}', '{}','{}','{}','{}');").format(irheader[0],irheader[1],irheader[2],irfile[1],irheader[3]))
+    if (db_renew) == 1:
+        cur.execute("DROP TABLE IF EXISTS irfile;")
+        cur.execute("DROP TABLE IF EXISTS irbutton;")
+        cur.execute("DROP TABLE IF EXISTS ircomment;")
+        cur.execute("DROP TABLE IF EXISTS rawbutton;")        
 
-        ircomments = irdb.get_irdbcomments(irfile[0])
-        if (len(ircomments)) != 0:
-            ircomments = ircomments.replace("'","") # dirty hack, because sqlite using ' itself
-            cur.execute(("INSERT INTO ircomment VALUES ('{}','{}');").format(ircomments,irfile[1]))
-
-        for irbutton in irdb.get_irbuttons(irfile[0]):
-            irbuttons = (irbutton.split(','))
-            ### irheader[3] == irfile[1] ?? ###
-            cur.execute(("INSERT INTO irbutton VALUES ('{}','{}','{}','{}','{}','{}');").format(irbuttons[0],irbuttons[1],irbuttons[2],irbuttons[3],irbuttons[4],irfile[1]))
-            if irbuttons[1] == 'raw' and rawanalysis == 1:
-                binary_button = rawanalyis.button_raw2binary(irbuttons[4])
-                if len(binary_button) > 1:
-                    raw_header = ' '.join(binary_button[1])
-                    #print(irbuttons[0],binary_button[0],raw_header,binary_button[2],binary_button[3],binary_button[4],irheader[3])
-                    cur.execute(("INSERT INTO rawbutton VALUES ('{}','{}','{}','{}','{}','{}','{}');").format(irbuttons[0],binary_button[0],raw_header,binary_button[2],binary_button[3],binary_button[4],irfile[1]))
-                    
+    cur.execute("CREATE TABLE IF NOT EXISTS irfile (category,brand,file,md5hash,source,created,updated);")
+    cur.execute("CREATE TABLE IF NOT EXISTS irbutton (name,type,protocol,address,command,md5hash);")    
+    cur.execute("CREATE TABLE IF NOT EXISTS ircomment (comment,md5hash);")
+    if rawanalysis == 1:
+        cur.execute("CREATE TABLE IF NOT EXISTS rawbutton (name,header,binarydata,tail,bit,divident,md5hash);")
+        
     con.commit()
     con.close()
-    print("Header and buttons written in database",db_fzirdb)
+
+
+## Write items to database
+######################################
+
+def write_irdb2db():
+
+    irheader = irdb.get_irdbattibutes(irfile[0])
+    cur.execute(("INSERT INTO irfile VALUES ('{}', '{}','{}','{}','{}');").format(irheader[0],irheader[1],irheader[2],irfile[1],irheader[3]))
+
+    ircomments = irdb.get_irdbcomments(irfile[0])
+    if (len(ircomments)) != 0:
+        ircomments = ircomments.replace("'","") # dirty hack, because sqlite using ' itself
+        cur.execute(("INSERT INTO ircomment VALUES ('{}','{}');").format(ircomments,irfile[1]))
+
+    for irbutton in irdb.get_irbuttons(irfile[0]):
+        irbuttons = (irbutton.split(','))
+        ### irheader[3] == irfile[1] ?? ###
+        cur.execute(("INSERT INTO irbutton VALUES ('{}','{}','{}','{}','{}','{}');").format(irbuttons[0],irbuttons[1],irbuttons[2],irbuttons[3],irbuttons[4],irfile[1]))
+        if irbuttons[1] == 'raw' and rawanalysis == 1:
+            binary_button = rawanalyis.button_raw2binary(irbuttons[4])
+            if len(binary_button) > 1:
+                raw_header = ' '.join(binary_button[1])
+
+                #print(irbuttons[0],binary_button[0],raw_header,binary_button[2],binary_button[3],binary_button[4],irheader[3])
+                cur.execute(("INSERT INTO rawbutton VALUES ('{}','{}','{}','{}','{}','{}','{}');").format(irbuttons[0],binary_button[0],raw_header,binary_button[2],binary_button[3],binary_button[4],irfile[1]))
+
+## Insert items to database
+######################################
+
+    ## irfile: [0] path, [1] md5sum, [2] irfile
+    ## irattr: [0] category, [1] brand, [2] file, [3] source
+
+def insert_irfile(irf_file,irf_md5,ira_cat,ira_brand):
+    ## "INSERT INTO "
+
+
+
+## Update items in database
+######################################
+
+    ## irfile: [0] path, [1] md5sum, [2] irfile
+    ## irattr: [0] category, [1] brand, [2] file, [3] source
+
+def update_irfile(sql_rowid,irf_file,irf_md5,ira_cat,ira_brand,sql_md5):
+
+    con = sqlite3.connect(fzirdb)
+    cur = con.cursor()
+
+    # sql_updatelist: ROWID, file, irfile , md5sum ,irattr[0],irattr[1]
+    cur.executemany("INSERT INTO btntrans VALUES (?, ?, ?);", sql_updatelist)
+
+    con.commit()
+    con.close()
+
+    
+    ## update datetime for irfile.update, change irfile.md5hash to irf_md5
+    ## add new irbuttons/ircomments
+    ## mark deleted irbuttons where md5hash = sql_md5 WHEN count 1
+
+
+def insert_irbtn()
+    
+
+## Read fileinfo from local IRDB
+######################################
+
+def select_irfile(fzirdb):
+    try:
+        con = sqlite3.connect(fzirdb)    
+        cur = con.cursor()
+        cur.execute("SELECT ROWID,irfid,file,md5hash,category,brand FROM irfile")
+        
+        localirdb = cur.fetchall()
+#        print(localirdb)
+	return(localirdb)
+
+    except OSError as e:
+        print(e)
+        
+    con.close()
+
 
 ## Add extra tables (button translation)
 ######################################
 
-def translate_buttons():
-    con = sqlite3.connect(db_fzirdb)
+def translate_buttons(fzirdb):
+    con = sqlite3.connect(fzirdb)
     cur = con.cursor()
     cur.execute("DROP TABLE IF EXISTS btntrans;")
     cur.execute("CREATE TABLE IF NOT EXISTS btntrans ('id', 'name','button');")
@@ -81,5 +162,14 @@ def translate_buttons():
     con.commit()
     con.close()
 
-    print("Buttons translation table (btntrans) created in",db_fzirdb)
+    print("Buttons translation table (btntrans) created in",fzirdb)
 
+
+## Execute program
+######################################
+
+if __name__ == '__main__':
+    
+    read_from_sqlite(db_fzirdb)
+#    print("Find your database at:", db_fzirdb)
+#    translate_buttons(db_fzirdb)

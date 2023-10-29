@@ -35,13 +35,13 @@ def get_irfiles(dir_fzirdb):
 		    ## Create MD5 hsh als PK for SQL
                     with open(str(irfilepath), 'rb') as md5file:
                         digest = hashlib.file_digest(md5file, 'md5')
-                    irpath_list.append([irfilepath, digest.hexdigest()])
+                    irpath_list.append([irfilepath, digest.hexdigest(), irfile])
             else:
                 pass
     print(("{} IR files from {} to process").format(len(irpath_list),dir_fzirdb))
     
     return(irpath_list)
-    ## Format: '/path/to/file.ir', 'MD5Hash'
+    ## Format: '/path/to/file.ir', 'MD5Hash', 'file.ir'
 
     
 ## Get file header (category, brand, filename, MD5)
