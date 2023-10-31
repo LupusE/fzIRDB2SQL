@@ -91,22 +91,33 @@ def write_irdb2db():
 
 ## Insert items to database
 ######################################
+    
+    ## irfile    (category,brand,file,md5hash,source,created,updated)
+    ## irbutton  (name,type,protocol,address,command,md5hash)
+    ## ircomment (comment,md5hash)
+    ## rawbutton (name,header,binarydata,tail,bit,divident,md5hash)
+            
+    ## updatelist:    [0] ROWID, [1] file_old, [2] file_new, [3] md5sum, [4] categ,   [5] brand,     [6] NULL, [7] timestamp
+    ## insertlist:    [0] file,  [1] md5sum,   [2] categ,    [3] brand,  [4] source , [5] timestamp, [6] NULL
+    ## insertbtnlist: [0] name,  [1] type,     [2] proto,    [3] address [4] command, [5] md5sum,    [6] ROWID
 
-    ## irfile: [0] path, [1] md5sum, [2] irfile
-    ## irattr: [0] category, [1] brand, [2] file, [3] source
-
-def insert_irfile(irf_file,irf_md5,ira_cat,ira_brand):
+def insert_irfile(insertlist):
     ## "INSERT INTO "
+    con = sqlite3.connect(fzirdb)
+    cur = con.cursor()
+
+    cur.executemany("INSERT INTO irfile VALUES (?, ?, ?);", insertlist)
+    
+    con.commit()
+    con.close()
 
 
 
 ## Update items in database
 ######################################
 
-    ## irfile: [0] path, [1] md5sum, [2] irfile
-    ## irattr: [0] category, [1] brand, [2] file, [3] source
-
-def update_irfile(sql_rowid,irf_file,irf_md5,ira_cat,ira_brand,sql_md5):
+def update_irfile(updatelist):
+                  ## sql_rowid,irf_file,irf_md5,ira_cat,ira_brand,sql_md5
 
     con = sqlite3.connect(fzirdb)
     cur = con.cursor()

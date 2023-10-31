@@ -5,6 +5,8 @@ import mod_irdbhandler as irdb
 import mod_sqlitehandler as sqlite
 import time
 import mod_analysis as analyis
+import sys ## Versioncontrol for raw analysis
+
 
 db_fzirdb = os.path.join(os.getcwd(), 'db', 'flipper_irdblite.db')
 timestamp = time.time()
@@ -20,9 +22,9 @@ if sys.version_info <= (3,9):
 
 if __name__ == '__main__':
     
-    if (os.path.exists(db_fzirdb)):
-    	irsql = sqlite.select_irfile(db_fzirdb)
-    create_localirdb(db_fzirdb)	
+    if (!os.path.exists(db_fzirdb)):
+    	sqlite.create_localirdb(db_fzirdb)
+    irsql = sqlite.select_irfile(db_fzirdb)
     
     sql_updatelist = []
     sql_insertlist = []
@@ -42,14 +44,13 @@ if __name__ == '__main__':
         if (irsql[1]+irsql[2]+irsql[3]+irsql[4] == irfile[2]+irfile[1]+irattr[0]+irattr[1]):
             #print ("skip")
 
-        elif (irsql[1]+irsql[3]+irsql[4] == irfile[2]+irattr[0]+irattr[1] AND irsql[2] != irfile[1]):
+        elif ((irsql[1]+irsql[3]+irsql[4] == irfile[2]+irattr[0]+irattr[1]) AND (irsql[2] != irfile[1])):
             #print ("update")
             sql_updatelist.append(irsql[0],irsql[1],irfile[2],irfile[1],irattr[0],irattr[1],NULL,timestamp)
-
+                               ## [0] ROWID, [1] file_old, [2] file_new, [3] md5sum, [4] categ, [5] brand, [6] NULL, [7] timestamp
             for irbutton in irdb.get_irbuttons(irfile[0]):
                 irbtn = (irbutton.split(','))
-                sql_insertbtnlist.append(irbtn[0],irbtn[1],irbtn[2],irbtn[3],irbtn[4],irbtn[1],irsql[0])
-
+                sql_insertbtnlist.append(irbtn[0],irbtn[1],irbtn[2],irbtn[3],irbtn[4],irsql[2],irsql[0])
                 if irbuttons[1] == 'raw' and rawanalysis == 1:
                     binary_button = rawanalyis.button_raw2binary(irbuttons[4])
                     if len(binary_button) > 1:
@@ -58,10 +59,11 @@ if __name__ == '__main__':
         else:
             #print ("insert")
 
-            sql_insertlist.append(irfile[2],irfile[1],irattr[0],irattr[1],timestamp,NULL)
+            sql_insertlist.append(irfile[2],irfile[1],irattr[0],irattr[1],irattr[3],timestamp,NULL)
+                               ## [0] file, [1] md5sum, [2] categ, [3] brand, [4] source , [5] timestamp, [6] NULL
             for irbutton in irdb.get_irbuttons(irfile[0]):
                 irbtn = (irbutton.split(','))
-                sql_insertbtnlist.append(irbtn[0],irbtn[1],irbtn[2],irbtn[3],irbtn[4],irbtn[1],irsql[0])
+                sql_insertbtnlist.append(irbtn[0],irbtn[1],irbtn[2],irbtn[3],irbtn[4],irsql[2],irsql[0])
 
                 if irbuttons[1] == 'raw' and rawanalysis == 1:
                     binary_button = analyis.button_raw2binary(irbtn[4])
@@ -82,4 +84,5 @@ if __name__ == '__main__':
     #sqlite.write2sqlite(db_fzirdb)
     print("Find your database at:", db_fzirdb)
     sqlite.translate_buttons(db_fzirdb)
+    
     
