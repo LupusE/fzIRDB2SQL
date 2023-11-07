@@ -92,23 +92,30 @@ def write_irdb2db():
 ## Insert items to database
 ######################################
     
-    ## irfile    (category,brand,file,md5hash,source,created,updated)
-    ## irbutton  (name,type,protocol,address,command,md5hash)
     ## ircomment (comment,md5hash)
     ## rawbutton (name,header,binarydata,tail,bit,divident,md5hash)
             
-    ## updatelist:    [0] ROWID, [1] file_old, [2] file_new, [3] md5sum, [4] categ,   [5] brand,     [6] NULL, [7] timestamp
-    ## insertlist:    [0] file,  [1] md5sum,   [2] categ,    [3] brand,  [4] source , [5] timestamp, [6] NULL
-    ## insertbtnlist: [0] name,  [1] type,     [2] proto,    [3] address [4] command, [5] md5sum,    [6] ROWID
-
+    
 def insert_irfile(insertlist):
     ## "INSERT INTO "
     con = sqlite3.connect(fzirdb)
     cur = con.cursor()
 
-    cur.executemany("INSERT INTO irfile VALUES (?, ?, ?);", insertlist)
+    ## irfile    (category,brand,file,md5hash,source,created,updated)
+    ## insertlist:    [0] file, [1] md5sum, [2] categ, [3] brand, [4] source, [5] timestamp, [6] NULL
+    insertquery = """INSERT INTO irfile (
+                     file, md5sum, categ, brand, source, inserted)
+                     VALUES (?,?,?,?,?,?);
+                  """
     
-    con.commit()
+    insertvalue = insertlist #insertlist[0],insertlist[3],insertlist[2],insertlist[3],insertlist[4],insertlist[5]
+    
+    try:
+        cur.executemany(insertquery, insertvalue)
+        con.commit()
+    except:
+        con.rollback()
+    
     con.close()
 
 
@@ -116,16 +123,34 @@ def insert_irfile(insertlist):
 ## Update items in database
 ######################################
 
+#q = """ INSERT INTO TABLE1 (Item_Name, Item_Price, Item_In_Stock, Item_Max, Observation_Date ) 
+#        values (%s,%s,%s,%s,%s) ON DUPLICATE KEY UPDATE Item_Price = VALUES(Item_Price), Item_In_Stock = VALUES(Item_In_Stock), Item_Max = VALUES(Item_Max), 
+#        Observation_Date = VALUES(Observation_Date)       
+#    """  
+
 def update_irfile(updatelist):
-                  ## sql_rowid,irf_file,irf_md5,ira_cat,ira_brand,sql_md5
+    ## sql_rowid,irf_file,irf_md5,ira_cat,ira_brand,sql_md5
+    # sql_updatelist: ROWID, file, irfile, md5sum, irattr[0], irattr[1]
 
     con = sqlite3.connect(fzirdb)
     cur = con.cursor()
-
-    # sql_updatelist: ROWID, file, irfile , md5sum ,irattr[0],irattr[1]
-    cur.executemany("INSERT INTO btntrans VALUES (?, ?, ?);", sql_updatelist)
-
-    con.commit()
+    
+    ## irfile    (category,brand,file,md5hash,source,created,updated)
+    ## updatelist:    [0] ROWID, [1] file_old, [2] file_new, [3] md5sum, [4] categ, [5] brand, [6] NULL, [7] timestamp
+    updatequery = """UPDATE INTO irfile (
+                     file, md5sum, categ, brand, updated)
+                     VALUES (?,?,?,?,?)
+                     WHERE irfile.ROWID = ?;
+                  """
+    
+    updatevalue = updatelist[2],updatelist[3],updatelist[4],updatelist[5],updatelist[7],updatelist[0]
+    
+    try:
+        cur.executemany(updatequery, updatevalue)
+        con.commit()
+    except:
+        con.rollback()
+    
     con.close()
 
     
@@ -134,7 +159,30 @@ def update_irfile(updatelist):
     ## mark deleted irbuttons where md5hash = sql_md5 WHEN count 1
 
 
+## Insert buttons to database
+######################################
+
 def insert_irbtn()
+    con = sqlite3.connect(fzirdb)
+    cur = con.cursor()
+
+    ## irbutton  (name,type,protocol,address,command,md5hash)
+    ## insertbtnlist: [0] name, [1] type, [2] proto, [3] address [4] command, [5] md5sum, [6] ROWID
+    updatequery = """UPDATE INTO irfile (
+                     file, md5sum, categ, brand, updated)
+                     VALUES (?,?,?,?,?)
+                     WHERE irfile.ROWID = ?;
+                  """
+    
+    updatevalue = updatelist[2],updatelist[3],updatelist[4],updatelist[5],updatelist[7],updatelist[0]
+    
+    try:
+        cur.executemany(updatequery, updatevalue)
+        con.commit()
+    except:
+        con.rollback()
+    
+    con.close()
     
 
 ## Read fileinfo from local IRDB
