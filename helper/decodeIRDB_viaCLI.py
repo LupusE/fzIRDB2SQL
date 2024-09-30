@@ -9,7 +9,6 @@
 ##
 ## Todo:
 ## - Errorhandling, when no flipper attached
-## - status output. 1. collect files, 2 process files
 
 import os
 import serial
@@ -17,8 +16,9 @@ import time
 
 IRDBonSystem = '/home/lupus/git/Flipper-IRDB/'
 IRDBonFlipper = '/ext/infrared/Flipper-IRDB/'
-ParsedFilesOnFlipper = '/ext/infrared/decoded/'
+ParsedFilesOnFlipper = '/ext/infrared/parsed/'
 FlipperZeroPort = '/dev/ttyACM0'
+ProcessedCount = 0
 
 ## Filter files for only neccesary to convert
 def CheckForTypeRAW(irfile):
@@ -28,23 +28,26 @@ def CheckForTypeRAW(irfile):
             return True
 
 ## Send CLI command to Flipper Zero to parse files
-def GenerateDecodedFiles(IRPath, IRFile):
+def GenerateParsedFile(IRPath, IRFile):
 	msg = 'ir decode '+IRDBonFlipper+IRPath+IRFile+' '+ParsedFilesOnFlipper+IRPath+IRFile
 
 	print(msg)
 
 	ser = serial.Serial(FlipperZeroPort)
-	#ser.write(msg.encode(encoding = 'ascii', errors = 'strict')+bytes([13, 10]))
+	ser.write(msg.encode(encoding = 'ascii', errors = 'strict')+bytes([13, 10]))
 	time.sleep(5)
 
 ## Processing, walkthrough local filesystem -> give result to FZ CLI
 IRDBFileslist = []
 for subdir, dirs, files in os.walk(IRDBonSystem):
     for IRFile in files:
-        if IRFile.endswith(".ir"):
-            if CheckForTypeRAW(os.path.join(subdir, IRFile)):
-                #print(subdir + " and " + IRFile)
-                IRDBFileslist += subdir.replace(IRDBonSystem,""), IRFile
-                GenerateDecodedFiles(subdir.replace(IRDBonSystem,""), IRFile)
+        if IRFile.endswith(".ir") and CheckForTypeRAW(os.path.join(subdir, IRFile)):
+            #print(subdir + " and " + IRFile)
+            IRDBFileslist += [[subdir.replace(IRDBonSystem,""), IRFile]]
 
-print(len(IRDBFileslist)+" files processed.")
+print(str(len(IRDBFileslist))+" files to process. Start.")
+for IRDBFile in IRDBFileslist:
+    GenerateParsedFile(IRDBFile[0], IRDBFile[1])
+    ProcessedCount += 1
+
+print("Finished. "+str(ProcessedCount)+" processed files.")
