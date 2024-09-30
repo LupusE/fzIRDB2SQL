@@ -94,12 +94,12 @@ def get_irdbcomments(irfile):
 
     with open(irfile, 'r') as filecomments:
         for line in filecomments:
-            if line.startswith("#") and (len(line.strip())) > 1:
+            if line.startswith("#") and (len(line.strip())) > 2:
                 comments.append(line)
 
     commentstr = "".join(comments)
     #print(commentstr)
-    return(commentstr)
+    return(commentstr.rstrip())
 
 
 ## Parse buttons (name, type, protcol/frequency, address/duty_cycle, command/data)
