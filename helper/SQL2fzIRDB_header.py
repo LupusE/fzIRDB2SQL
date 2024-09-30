@@ -13,7 +13,9 @@ SELECT irf.category
 	,irf.md5hash
 FROM irfile irf
 LEFT JOIN ircomment irc ON irf.md5hash = irc.md5hash
-WHERE irf.source = 'IRDB' AND irf.md5hash = 'cf4358f1c1a293f91599225acedb98b9'
+WHERE irf.source = 'IRDB'
+    AND irf.category = 'TVs'
+    AND irf.brand = 'Hitachi'
 """)
 
 irfiles = files.fetchall()
@@ -26,11 +28,12 @@ for irfile in irfiles:
     irfile_arr.append("Filetype: IR signals file")
     irfile_arr.append("Version: 1")
     irfile_arr.append("#")
-    irfile_arr.append(irfile[3])
+    if irfile[3]:
+        irfile_arr.append(irfile[3])
     irfile_arr.append("# type: {}".format(irfile[0]))
     irfile_arr.append("# brand: {}".format(irfile[1]))
-    irfile_arr.append("# model:")
-    irfile_arr.append("# remote:")
+    irmodel = irfile[2].replace(".ir","").replace(irfile[1],"").replace("_","")
+    irfile_arr.append("# model: {}".format(irmodel))
     irfile_arr.append("# protocol: {}".format(irfile[0]))
     irfile_arr.append("#")
 
