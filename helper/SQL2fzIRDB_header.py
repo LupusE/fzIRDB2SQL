@@ -30,11 +30,12 @@ for irfile in irfiles:
     irfile_arr.append("#")
     if irfile[3]:
         irfile_arr.append(irfile[3])
+        irfile_arr.append("#")
     irfile_arr.append("# type: {}".format(irfile[0]))
     irfile_arr.append("# brand: {}".format(irfile[1]))
     irmodel = irfile[2].replace(".ir","").replace(irfile[1],"").replace("_","")
-    irfile_arr.append("# model: {}".format(irmodel))
-    irfile_arr.append("# protocol: {}".format(irfile[0]))
+    irfile_arr.append("# model: {} (Not known if device or remote)".format(irmodel))
+    irfile_arr.append("# protocol: (TBD: Protocol of btn power or max of buttons)")
     irfile_arr.append("#")
 
     buttons = cur.execute(("""
@@ -43,7 +44,7 @@ for irfile in irfiles:
 		,IFNULL((SELECT button
 				 FROM btntrans btrn
 				 WHERE TRIM(irb.name) = btrn.name
-					AND btrn.name IS NOT ''
+					AND button IS NOT ""
 					),irb.name) name2
 		,irb.type
 		,irb.protocol
@@ -57,7 +58,7 @@ for irfile in irfiles:
 
     for irbutton in irbuttons:
         irfile_arr.append("#")
-        irfile_arr.append("name: {}".format(irbutton[0]))
+        irfile_arr.append("name: {}".format(irbutton[1]))
         if irbutton[2] == 'parsed':
             irfile_arr.append("type: {}".format(irbutton[2]))
             irfile_arr.append("protocol: {}".format(irbutton[3]))

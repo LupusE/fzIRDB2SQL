@@ -32,9 +32,9 @@ ID;Button;Translate
 31;Timer;Timer
 32;Pause;Pause
 33;Mute;Mute
-34;Red;RED
-35;Blue;BLUE
-36;Green;GREEN
+34;Red;Red
+35;Blue;Blue
+36;Green;Green
 37;OK;Ok
 38;Off;Off
 39;Enter;Enter
@@ -73,10 +73,10 @@ ID;Button;Translate
 72;Select;
 73;Repeat;Repeat
 74;STOP;Stop
-75;RED;RED
+75;RED;Red
 76;EXIT;Exit
-77;Bluetooth;BLUETOOTH
-78;BLUE;BLUE
+77;Bluetooth;Bluetooth
+78;BLUE;Blue
 79;USB;
 80;BACK;Back
 81;Strobe;
@@ -89,13 +89,13 @@ ID;Button;Translate
 88;R;
 89;Music;
 90;Options;
-91;GREEN;GREEN
+91;GREEN;Green
 92;Previous;
 93;PLAY;Play
 94;INFO;Info
 95;Fan;
 96;Aspect;
-97;YELLOW;
+97;YELLOW;Yellow
 98;Text;
 99;TV;
 100;Rotate;
@@ -132,16 +132,16 @@ ID;Button;Translate
 131;Reverse;Reverse
 132;Reset;
 133;Play/Pause;
-134;GUIDE;
+134;GUIDE;Guide
 135;ENTER;Enter
 136;Clock;
 137;CD;
 138;Volume_up;Vol_up
 139;Sound;
 140;Search;
-141;SLEEP;
+141;SLEEP;Sleep
 142;Option;
-143;ON;
+143;ON;On
 144;Minus;
 145;INPUT;Input
 146;Fav;
@@ -192,12 +192,12 @@ ID;Button;Translate
 191;Fan_down;
 192;FF;
 193;Bright;
-194;BLUETOOTH;BLUETOOTH
+194;BLUETOOTH;Bluetooth
 195;6h;
 196;4h;
 197;2h;
 198;10;
-199;TEXT;
+199;TEXT;Text
 200;Swing;
 201;Standby;
 202;Shuffle;Random
@@ -235,9 +235,9 @@ ID;Button;Translate
 234;Teal;
 235;TXT;
 236;Skip_Forward;Skip_Forward
-237;SETTINGS;
+237;SETTINGS;Settings
 238;Program;
-239;POWER_ON;Power_ON
+239;POWER_ON;Power_On
 240;POWER_OFF;Power_Off
 241;PLAY/PAUSE;Pause
 242;On_Off;Power
@@ -249,11 +249,11 @@ ID;Button;Translate
 248;DVD;
 249;Center;
 250;Candle;
-251;Bright_down;Bright-
+251;Bright_down;Bright_dn
 252;Blank;
 253;Bass;
 254;Backward;Backward
-255;AUTO;
+255;AUTO;Auto
 256;Zoom_in;
 257;YouTube;
 258;Volume_Up;Vol_up
@@ -263,22 +263,22 @@ ID;Button;Translate
 262;Violet;
 263;Usb;
 264;Temp;
-265;TOOLS;
+265;TOOLS;Tools
 266;Skip_Back;Backward
 267;Size;
-268;SUBTITLE;
-269;SPEED;
+268;SUBTITLE;Subtitle
+269;SPEED;Speed
 270;Recall;
 271;REPEAT;Repeat
-272;RECORD;
+272;RECORD;Record
 273;R3;
 274;R2;
 275;R1;
-276;Pwr;
+276;Pwr;Power
 277;PREV;
 278;Open_Close;
 279;OSC;
-280;OPTION;
+280;OPTION;Option
 281;Index;
 282;Hold;
 283;Heat_up;
@@ -287,14 +287,14 @@ ID;Button;Translate
 286;Function;
 287;Format;
 288;Fast_Forward;Forward
-289;FREEZE;
-290;FAN-;
-291;FAN+;
+289;FREEZE;Freeze
+290;FAN-;Fan_dn
+291;FAN+;Fan_up
 292;Dot;
 293;Cinema;
 294;Ch_list;Ch_list
 295;Cancel;
-296;CLEAR;
+296;CLEAR;Clear
 297;B3;
 298;B2;
 299;B1;
@@ -304,14 +304,14 @@ ID;Button;Translate
 303;VolUp;Vol_up
 304;VolDown;Vol_dn
 305;V_down;
-306;VIDEO;
+306;VIDEO;Video
 307;Turquoise;
 308;Tape;
 309;Speed_up;
 310;Speed_down;
 311;Slower;
 312;Skip_fwd;
-313;SOUND;
+313;SOUND;Sound
 314;Rew;
 315;Replay;
 316;Refresh;
@@ -320,7 +320,7 @@ ID;Button;Translate
 319;Pre_ch;Ch_prev
 320;P_mode;P_mode
 321;OPT;
-322;NETFLIX;
+322;NETFLIX;Netflix
 323;Light_blue;
 324;I;
 325;Hdmi_2;
@@ -333,7 +333,7 @@ ID;Button;Translate
 332;Faster;
 333;Fan Speed;
 334;Esc;
-335;EJECT;
+335;EJECT;Eject
 336;E;
 337;Dry;
 338;Computer;
@@ -341,17 +341,17 @@ ID;Button;Translate
 340;ChannelDown;Ch_prev
 341;ChList;Ch_list
 342;Brighten;
-343;Bass_down;
+343;Bass_down;Bass_dn
 344;Bass_Up;Bass_Up
-345;Bass_Down;
+345;Bass_Down;Bass_dn
 346;B4;
-347;AUDIO;
-348;ASPECT;
+347;AUDIO;Audio
+348;ASPECT;Aspect
 349;4H;
 350;11;
 351;Zoom_out;
-352;Zoom-;
-353;Zoom+;
+352;Zoom-;Zoom_dn
+353;Zoom+;Zoom_up
 354;Vol -;Vol_dn
 355;Vol +;Vol_up
 356;VOL -;Vol_dn
@@ -386,12 +386,12 @@ ID;Button;Translate
 385;Prime;
 386;Prev_Ch;Ch_prev
 387;PrevTrack;
-388;Power_on;Power_ON
+388;Power_on;Power_On
 389;Power_off;Power_Off
 390;Pip;
 391;Pc;
 392;POWER_off;Power_Off
-393;PINK;
+393;PINK;Pink
 394;Oscillation;
 395;Osc;
 396;Normal;
@@ -414,34 +414,34 @@ ID;Button;Translate
 413;Foward;
 414;Fade7;
 415;Fade3;
-416;FAN;
+416;FAN;Fan_
 417;Energy_Saver;
 418;Edge Clean;
-419;Dim -;
-420;Dim +;
+419;Dim -;Dim_dn
+420;Dim +;Dim_up
 421;Contrast;
 422;Comp;
 423;Carnation;
 424;Bt_pair;
 425;BassUp;Bass_Up
-426;BassDown;
+426;BassDown;Bass_dn
 427;Backwards;Backward
-428;BASS+;
+428;BASS+;Bass_up
 429;Alarm;
 430;A_B;
-431;>>;
-432;<<;
+431;>>;Forward
+432;<<;Rewind
 433;8H;
-434;|<<;
+434;|<<;Previous
 435;source;Source
 436;off;Off
 437;input;Input
 438;home;Home
 439;back;Back
-440;ZOOM;
+440;ZOOM;Zoom_
 441;YPbPr;
 442;Warm;
-443;WHITE;
+443;WHITE;White
 444;Volume Up;Vol_up
 445;Volume Down;Vol_dn
 446;Vol_plus;Vol_up
@@ -449,8 +449,8 @@ ID;Button;Translate
 448;UP_Arrow;Up
 449;Turn;
 450;Treble_down;
-451;Track_fwd;
-452;Track_back;Track_back
+451;Track_fwd;Next
+452;Track_back;Previous
 453;Timer Off;Timer_Off
 454;Test;
 455;Temp_up;
@@ -460,21 +460,21 @@ ID;Button;Translate
 459;TV_Input;Input_TV
 460;TV_AV;
 461;TV/Radio;
-462;TURBO;
-463;TUNER;
+462;TURBO;Turbo
+463;TUNER;Tuner
 464;TTX/MIX;
-465;TELETEXT;
+465;TELETEXT;Teletext
 466;Sync;
 467;Swap;
 468;Subtitles;
-469;Sub_down;
+469;Sub_down;Sub_dn
 470;Status;
 471;Start Stop;
 472;Standard;
 473;Src;
 474;Sports;
-475;Speed -;
-476;Speed +;
+475;Speed -;Speed_dn
+476;Speed +;Speed_up
 477;Sound_control;
 478;Souce;
 479;Smart Hub;
@@ -483,21 +483,21 @@ ID;Button;Translate
 482;Sea Green;
 483;Scan;
 484;STTL;
-485;STILL;
+485;STILL;Still
 486;SRS;
-487;SPEED-;
-488;SPEED+;
+487;SPEED-;Speed_dn
+488;SPEED+;Speed_up
 489;SMODE;S_mode
-490;SLEEP MODE;
+490;SLEEP MODE;Sleep_mode
 491;SETUP;Setup
 492;SAP;
 493;Resolution;
 494;Reboot;
 495;Raise;
-496;ROTATE;
-497;REW;
+496;ROTATE;Rotate
+497;REW;Rewind
 498;REVERSE;Reverse
-499;Power_On;Power_ON
+499;Power_On;Power_On
 500;Position;
 501;PlayPause;Pause
 502;Play Pause;Pause
@@ -517,7 +517,7 @@ ID;Button;Translate
 516;Next_track;
 517;News;
 518;Narrow;
-519;NIGHT;
+519;NIGHT;Night
 520;Muting;
 521;Mouse;
 522;Mode_auto;
@@ -532,8 +532,8 @@ ID;Button;Translate
 531;Light_green;
 532;Last_View;
 533;Language;
-534;LIST;
-535;LANG;
+534;LIST;List
+535;LANG;Lang
 536;Internet;
 537;Heat;
 538;Hdmi_4;
@@ -541,9 +541,9 @@ ID;Button;Translate
 540;Func;
 541;Favorites;
 542;Fastforward;Forward
-543;Fast_Fwd;
+543;Fast_Fwd;Forward
 544;Fan_Speed;
-545;FWD;
+545;FWD;Forward
 546;FLASH;
 547;FAN_AUTO;
 548;F1;
@@ -554,7 +554,7 @@ ID;Button;Translate
 553;Dwn;
 554;Disney+;
 555;Dim_up;
-556;D_Blue;BLUE
+556;D_Blue;Blue
 557;DPad_Up;Up
 558;DPad_Right;Right
 559;DPad_Left;Left
@@ -576,10 +576,10 @@ ID;Button;Translate
 575;Bt;
 576;Bright-;Bright-
 577;Bright+;Bright+
-578;B_Green;GREEN
+578;B_Green;Green
 579;BGM;
 580;BD_DVD;
-581;BASS-;
+581;BASS-;Bass_dn
 582;Aqua;
 583;Analog;
 584;Ambilight;
@@ -590,7 +590,7 @@ ID;Button;Translate
 589;A_Red;
 590;AV_Sync;
 591;AV_Mute;Mute_AV
-592;>>|;
+592;>>|;Next
 593;6H;
 594;2H;
 595;21;
@@ -607,22 +607,22 @@ ID;Button;Translate
 606;10_0;
 607;100;
 608;*;
-609;|<;
+609;|<;Previous
 610;up;Up
 611;stop;Stop
-612;silence;
+612;silence;Silence
 613;right;Right
-614;return;
-615;red;RED
-616;rec;
+614;return;Return
+615;red;Red
+616;rec;Record
 617;power;Power
 618;play;Play
 619;pause;Pause
-620;on;
+620;on;Power
 621;ok;Ok
 622;menu;Menu
 623;left;Left
-624;green;GREEN
+624;green;Green
 625;down;Down
 626;bright_up;Bright+
 627;bright_down;Bright-
@@ -820,8 +820,8 @@ ID;Button;Translate
 819;PREVIOUS;
 820;PRESET;
 821;PRE-CH;Ch_prev
-822;POWER_on;Power_ON
-823;POWER_On;Power_ON
+822;POWER_on;Power_On
+823;POWER_On;Power_On
 824;POWER OFF;Power_Off
 825;POUND;
 826;PMode;P_mode
@@ -2479,8 +2479,8 @@ ID;Button;Translate
 2478;Power_BOX;
 2479;Power tape;Power_Tape
 2480;Power receiver;
-2481;Power On;Power_ON
-2482;Power ON;Power_ON
+2481;Power On;Power_On
+2482;Power ON;Power_On
 2483;Power OFF;Power_Off
 2484;Power CD;Power_CD
 2485;Powa;
@@ -2618,7 +2618,7 @@ ID;Button;Translate
 2617;POWER_TV;Power_TV
 2618;POWER_Source;Power_2
 2619;POWER_Receiver;Power_Receiver
-2620;POWER_ON (3A);Power_ON
+2620;POWER_ON (3A);Power_On
 2621;POWER_OFF (3B);Power_Off
 2622;POWER_MUSIC;
 2623;POWER_LED;
@@ -4236,7 +4236,7 @@ ID;Button;Translate
 4235;Bluetooth_power;Power_Bluetooth
 4236;BluetoothRXTX;
 4237;Bluetooth POWER;Power_Bluetooth
-4238;Bluethoot;BLUETOOTH
+4238;Bluethoot;Bluetooth
 4239;Blue_up;
 4240;Blue_timer;
 4241;Blue_pause;
@@ -4897,7 +4897,7 @@ ID;Button;Translate
 4896;100 C;
 4897;10%;
 4898;10 Sec;
-4899;1/.,-;
+4899;1/.;-
 4900;1 Min;
 4901;1 CD;
 4902;1 / P1;
