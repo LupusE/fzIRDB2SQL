@@ -1,38 +1,26 @@
 import os
 import sqlite3
 import csv
-import sys ## Versioncontrol for raw analysis
 
 import mod_irdbhandler as irdb
 import mod_analysis as rawanalyis
 
 
-db_fzirdb = os.path.join(os.getcwd(), 'db', 'flipper_irdblite.db')
-dir_fzirdb = os.path.join(os.getcwd(), '..', 'Flipper-IRDB')
-
-## Try to parse raw data to compareable format
-rawanalysis = 1
-if sys.version_info <= (3,9):
-    print("No RAW Analysis possible. Function match() available from Python 3.10")
-    print("Python version found:", sys.version)
-    rawanalysis = 0
-
-
-
 ## Write parsed items to database
 ######################################
 
-def write2sqlite():
+def write2sqlite(db_fzirdb, dir_fzirdb, rawanalysis):
     try:
         con = sqlite3.connect(db_fzirdb)    
         cur = con.cursor()
         cur.execute("DROP TABLE IF EXISTS irfile;")
         cur.execute("DROP TABLE IF EXISTS irbutton;")
         cur.execute("DROP TABLE IF EXISTS ircomment;")
+        cur.execute("DROP TABLE IF EXISTS rawbutton;")        
+        
         cur.execute("CREATE TABLE IF NOT EXISTS irfile (category,brand,file,md5hash,source);")
         cur.execute("CREATE TABLE IF NOT EXISTS irbutton (name,type,protocol,address,command,md5hash);")    
         cur.execute("CREATE TABLE IF NOT EXISTS ircomment (comment,md5hash);")
-        cur.execute("DROP TABLE IF EXISTS rawbutton;")        
         if rawanalysis == 1:
             cur.execute("CREATE TABLE IF NOT EXISTS rawbutton (name,header,binarydata,tail,bit,divident,md5hash);")
 
@@ -67,15 +55,20 @@ def write2sqlite():
 ## Add extra tables (button translation)
 ######################################
 
-def translate_buttons():
+def translate_buttons(db_fzirdb):
     con = sqlite3.connect(db_fzirdb)
     cur = con.cursor()
     cur.execute("DROP TABLE IF EXISTS btntrans;")
     cur.execute("CREATE TABLE IF NOT EXISTS btntrans ('id', 'name','button');")
 
     with open('db/csv/Flipper-IRDB2SQLite_btn-transl.csv','r') as translate:
-        translate_dr = csv.DictReader(translate, delimiter=',')
-        toSQLitedb = [(i['ID'], i['Button'], i['Translate']) for i in translate_dr]
+        translate_dict = csv.DictReader(translate, delimiter=',')
+        toSQLitedb = []
+        for i in translate_dict:
+            if i['Translate'] == '':
+                toSQLitedb.append([i['ID'],i['Button'],None])
+            else:
+                toSQLitedb.append([i['ID'],i['Button'],i['Translate']])
 
     cur.executemany("INSERT INTO btntrans VALUES (?, ?, ?);", toSQLitedb)
     con.commit()
