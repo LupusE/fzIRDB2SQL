@@ -59,7 +59,7 @@ class FlipperIRDecoder:
         
         logging.basicConfig(
             level=numeric_level,
-            format='%(asctime)s - %(levelname)s - %(message)s',
+            format='%(levelname)s: %(message)s',  # Simplified format
             handlers=[
                 logging.FileHandler(log_file, mode='a'),  # Append mode
                 logging.StreamHandler(sys.stdout)  # Console output
@@ -83,7 +83,6 @@ class FlipperIRDecoder:
         Filters out unwanted CLI responses like ASCII art.
         """
         try:
-            logging.debug(f"Sending command: {command}")
             self.serial_conn.write(f"{command}\r\n".encode('ascii'))
             time.sleep(0.5)  # Adjust as needed based on device responsiveness
             response = self.serial_conn.read(self.serial_conn.in_waiting).decode('ascii', errors='ignore').strip()
@@ -172,7 +171,8 @@ class FlipperIRDecoder:
         input_file = f"{self.flipper_dir}{relative_path}/{ir_file}".replace("\\", "/")
         output_file = f"{self.parsed_dir}{relative_path}/{ir_file}".replace("\\", "/")
 
-        logging.info(f"Decoding file: '{input_file}' to '{output_file}'.")
+        # Only log if necessary (e.g., directory creation)
+        # Avoid per-file INFO logs for decoding to reduce clutter
 
         # Ensure the output directory exists
         output_dir = os.path.dirname(output_file)
@@ -196,7 +196,7 @@ class FlipperIRDecoder:
         list_response = self.send_command(list_command)
 
         if ir_file in list_response:
-            logging.info(f"Successfully decoded '{input_file}' to '{output_file}'.")
+            self.processed_count += 1  # Increment only on success
             return True
         else:
             logging.error(f"Decoded file '{output_file}' not found after decoding.")
@@ -215,9 +215,7 @@ class FlipperIRDecoder:
         logging.info(f"{total_files} files to process. Starting...")
         with tqdm(total=total_files, desc="Decoding IR Files", unit="file") as pbar:
             for relative_path, ir_file in ir_files:
-                success = self.decode_ir_file(relative_path, ir_file)
-                if success:
-                    self.processed_count += 1
+                self.decode_ir_file(relative_path, ir_file)
                 pbar.update(1)
 
         logging.info(f"Finished. {self.processed_count} out of {total_files} files processed successfully.")
@@ -285,7 +283,7 @@ def main():
     parser.add_argument(
         '--log-level',
         type=str,
-        default='INFO',
+        default='WARNING',  # Changed default to WARNING to reduce verbosity
         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
         help='Logging level.'
     )
