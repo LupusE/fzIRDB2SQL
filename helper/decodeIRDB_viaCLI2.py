@@ -38,7 +38,7 @@ def check_and_install_dependencies(required_packages):
 # ----------------------------
 
 class FlipperIRDecoder:
-    def __init__(self, system_dir, flipper_dir, parsed_dir, port, log_level, log_file):
+    def __init__(self, system_dir, flipper_dir, parsed_dir, port, log_level, log_file, close_apps_frequency=10):
         self.system_dir = system_dir
         self.flipper_dir = flipper_dir
         self.parsed_dir = parsed_dir
@@ -47,6 +47,7 @@ class FlipperIRDecoder:
         self.failed_files = []
         self.setup_logging(log_level, log_file)
         self.serial_conn = None
+        self.close_apps_frequency = close_apps_frequency
 
     def setup_logging(self, log_level, log_file):
         """
@@ -73,82 +74,100 @@ class FlipperIRDecoder:
         try:
             self.serial_conn = serial.Serial(self.port, timeout=1)
             logging.info("Connected to Flipper Zero. Starting IR file processing.")
+            self.check_cli_version()
         except serial.SerialException as e:
             logging.error(f"Error connecting to Flipper Zero on port {self.port}: {e}")
             sys.exit(1)
 
-    def send_command(self, command):
+    def send_command(self, command, timeout=2):
         """
-        Send a command to Flipper Zero and return the response.
-        Filters out unwanted CLI responses like ASCII art.
+        Send a command to Flipper Zero and return the response with a shorter timeout.
         """
         try:
             self.serial_conn.write(f"{command}\r\n".encode('ascii'))
-            time.sleep(0.5)  # Adjust as needed based on device responsiveness
-            response = self.serial_conn.read(self.serial_conn.in_waiting).decode('ascii', errors='ignore').strip()
             
-            # Filter out ASCII art or unwanted messages
-            if "Welcome to Flipper Zero" in response:
+            start_time = time.time()
+            response = ""
+            while time.time() - start_time < timeout:
+                if self.serial_conn.in_waiting:
+                    chunk = self.serial_conn.read(self.serial_conn.in_waiting).decode('ascii', errors='ignore')
+                    response += chunk
+                    if '\n' in chunk:  # Check for newline to indicate end of response
+                        break
+                time.sleep(0.05)  # Short sleep to prevent CPU hogging
+            
+            response = response.strip()
+            
+            # Filter out unwanted responses
+            if any(unwanted in response for unwanted in ["Welcome to Flipper Zero", "Firmware version", ">:"]):
                 return ""
-            if "Firmware version" in response:
-                return ""
-            if response.startswith(">:"):
-                return ""
-            if not response:
-                return ""
+            
+            if "Error:" in response or "Failed:" in response:
+                logging.error(f"Command '{command}' failed: {response}")
+                return None
             
             return response
         except Exception as e:
             logging.error(f"Failed to send command '{command}': {e}")
-            return ""
+            return None
+
+
+    def send_command_with_retry(self, command, max_retries=3, timeout=2):
+        """
+        Send a command with retry mechanism and configurable timeout.
+        """
+        for attempt in range(max_retries):
+            response = self.send_command(command, timeout=timeout)
+            if response is not None:
+                return response
+            logging.warning(f"Retrying command '{command}' (attempt {attempt + 1}/{max_retries})")
+            time.sleep(0.1)  # Reduced delay between retries
+        logging.error(f"Command '{command}' failed after {max_retries} attempts")
+        return None
 
     def create_directory(self, path):
         """
         Create a directory on Flipper Zero if it doesn't exist.
         """
-        # Split the path into components to create nested directories
-        directories = path.strip('/').split('/')
-        current_path = ''
-        for directory in directories:
-            current_path += f'/{directory}'
-            response = self.send_command(f"storage mkdir {current_path}")
-            if "file/dir already exist" in response or "already exists" in response:
-                # Directory already exists, no action needed
-                continue
-            elif "Storage error:" in response:
-                # Log the error but continue attempting to create other directories
+        components = path.strip('/').split('/')
+        for i in range(1, len(components) + 1):
+            current_path = '/' + '/'.join(components[:i])
+            response = self.send_command_with_retry(f"storage mkdir {current_path}")
+            if response is None or ("Storage error:" in response and "already exists" not in response.lower()):
                 logging.error(f"Error creating directory '{current_path}': {response}")
-                continue
-            else:
-                logging.info(f"Created directory '{current_path}'.")
+                return False
+        return True
 
     def close_running_apps(self):
         """
         Close any running applications on Flipper Zero.
         """
-        self.send_command("loader list")
-        self.send_command("loader close infrared")
-        self.send_command("loader close ir_transmitter")
+        self.send_command_with_retry("loader list")
+        self.send_command_with_retry("loader close infrared")
+        self.send_command_with_retry("loader close ir_transmitter")
+
+    def read_file_content(self, file_path):
+        """
+        Read file content with multiple encoding attempts.
+        """
+        encodings = ['utf-8', 'cp1252', 'iso-8859-1', 'utf-16']
+        for encoding in encodings:
+            try:
+                with open(file_path, 'r', encoding=encoding) as f:
+                    return f.read()
+            except UnicodeDecodeError:
+                continue
+        logging.error(f"Unable to read file '{file_path}' with any supported encoding.")
+        return None
 
     def check_type_raw(self, irfile):
         """
         Check if the IR file is of type 'raw'.
         """
-        try:
-            with open(irfile, 'r', encoding='utf-8') as f:
-                content = f.read()
-                return 'type: raw' in content
-        except UnicodeDecodeError:
-            try:
-                with open(irfile, 'r', encoding='cp1252') as f:
-                    content = f.read()
-                    return 'type: raw' in content
-            except UnicodeDecodeError:
-                logging.warning(f"Unable to read file '{irfile}' with UTF-8 or cp1252 encoding. Skipping.")
-                return False
-        except Exception as e:
-            logging.error(f"Error reading file '{irfile}': {e}")
+        content = self.read_file_content(irfile)
+        if content is None:
             return False
+        return 'type: raw' in content
 
     def gather_ir_files(self):
         """
@@ -164,48 +183,50 @@ class FlipperIRDecoder:
                         ir_files.append((relative_path, file))
         return ir_files
 
+    def verify_file_exists(self, file_path, timeout=0.5):
+        """
+        Verify if a file exists on Flipper Zero with a shorter timeout.
+        """
+        response = self.send_command(f"storage info {file_path}", timeout=timeout)
+        return response is not None and "File not found" not in response
+
+
     def decode_ir_file(self, relative_path, ir_file):
         """
-        Decode a single IR file.
+        Decode a single IR file without closing apps each time.
         """
         input_file = f"{self.flipper_dir}{relative_path}/{ir_file}".replace("\\", "/")
         output_file = f"{self.parsed_dir}{relative_path}/{ir_file}".replace("\\", "/")
 
-        # Only log if necessary (e.g., directory creation)
-        # Avoid per-file INFO logs for decoding to reduce clutter
-
         # Ensure the output directory exists
         output_dir = os.path.dirname(output_file)
-        self.create_directory(output_dir)
+        if not self.create_directory(output_dir):
+            logging.error(f"Failed to create directory for '{output_file}'")
+            self.failed_files.append(input_file)
+            return False
 
-        # Close any running applications
-        self.close_running_apps()
-
-        # Decode the IR file
+        # Decode the IR file with a shorter timeout
         decode_command = f"ir decode {input_file} {output_file}"
-        response = self.send_command(decode_command)
+        response = self.send_command_with_retry(decode_command, timeout=1)
 
-        # Check response for success or failure
-        if "Error" in response or "Failed" in response:
+        if response is None or "Error" in response or "Failed" in response:
             logging.error(f"Failed to decode '{input_file}'. Response: {response}")
             self.failed_files.append(input_file)
             return False
 
-        # Verify the file was created
-        list_command = f"storage list {output_dir}"
-        list_response = self.send_command(list_command)
-
-        if ir_file in list_response:
-            self.processed_count += 1  # Increment only on success
+        # Verify the file was created (with a short timeout)
+        if self.verify_file_exists(output_file, timeout=0.5):
+            self.processed_count += 1
             return True
         else:
             logging.error(f"Decoded file '{output_file}' not found after decoding.")
             self.failed_files.append(input_file)
             return False
 
+
     def process_ir_files(self, ir_files):
         """
-        Process all gathered IR files with a progress bar.
+        Process all gathered IR files with a progress bar and less frequent app closing.
         """
         total_files = len(ir_files)
         if total_files == 0:
@@ -214,13 +235,37 @@ class FlipperIRDecoder:
 
         logging.info(f"{total_files} files to process. Starting...")
         with tqdm(total=total_files, desc="Decoding IR Files", unit="file") as pbar:
-            for relative_path, ir_file in ir_files:
+            for index, (relative_path, ir_file) in enumerate(ir_files, 1):
+                if index % self.close_apps_frequency == 1:
+                    self.close_running_apps()
+                    logging.debug(f"Closed running apps before processing file {index}")
+                
                 self.decode_ir_file(relative_path, ir_file)
                 pbar.update(1)
 
         logging.info(f"Finished. {self.processed_count} out of {total_files} files processed successfully.")
         if self.failed_files:
             logging.warning(f"{len(self.failed_files)} files failed to decode. Check the log for details.")
+
+    def check_cli_version(self):
+        """
+        Check the CLI version of Flipper Zero.
+        """
+        response = self.send_command_with_retry("version")
+        if response:
+            logging.info(f"Flipper Zero Firmware Version: {response}")
+        else:
+            logging.warning("Unable to determine Flipper Zero firmware version")
+
+    def capture_flipper_logs(self, duration=5):
+        """
+        Capture Flipper Zero logs for a specified duration.
+        """
+        self.send_command_with_retry("log debug")
+        time.sleep(duration)
+        logs = self.send_command_with_retry("log")
+        self.send_command_with_retry("log default")
+        return logs
 
     def run(self):
         """
@@ -253,19 +298,19 @@ def main():
     parser.add_argument(
         '--system-dir',
         type=str,
-        default='Z:/scripts/ir files/Flipper-IRDB',
+        default='Z:/scripts/ir files/Flipper-IRDB-main',
         help='Path to the IRDB on the system.'
     )
     parser.add_argument(
         '--flipper-dir',
         type=str,
-        default='/ext/infrared/Flipper-IRDB/',
+        default='/ext/infrared/Flipper-IRDB-main/',
         help='Path to the IRDB on Flipper Zero.'
     )
     parser.add_argument(
         '--parsed-dir',
         type=str,
-        default='/ext/infrared/parsed/',
+        default='/ext/infrared/DECODED-IRDB/',
         help='Path to the parsed files on Flipper Zero.'
     )
     parser.add_argument(
@@ -283,9 +328,15 @@ def main():
     parser.add_argument(
         '--log-level',
         type=str,
-        default='WARNING',  # Changed default to WARNING to reduce verbosity
+        default='WARNING',
         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
         help='Logging level.'
+    )
+    parser.add_argument(
+    '--close-apps-frequency',
+    type=int,
+    default=10,
+    help='Frequency of closing running apps (every N files).'
     )
     args = parser.parse_args()
 
@@ -296,7 +347,8 @@ def main():
         parsed_dir=args.parsed_dir,
         port=args.port,
         log_level=args.log_level,
-        log_file=args.log_file
+        log_file=args.log_file,
+        close_apps_frequency=args.close_apps_frequency
     )
     decoder.run()
 
