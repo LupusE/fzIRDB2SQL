@@ -36,7 +36,7 @@ def read_file(file_path):
 
 def write_file(file_path, content):
     try:
-        with open(file_path, 'w', encoding='utf-8') as file:
+        with open(file_path, 'w', encoding='utf-8', newline='\n') as file:
             file.write('\n'.join(content))
         return True
     except Exception as e:
@@ -60,37 +60,109 @@ def extract_button_info(content):
     return buttons
 
 def clean_and_deduplicate(original_content, decoded_content):
-    # Extract initial comment block
-    initial_comments = []
+    # Extract initial content (comments and file type info)
+    initial_content = []
     for line in original_content:
         if line.strip().startswith('#') or line.startswith('Filetype:') or line.startswith('Version:'):
-            initial_comments.append(line)
+            initial_content.append(line)
         else:
-            break  # Stop when we hit the first non-comment line
+            break
 
-    decoded_buttons = extract_button_info(decoded_content)
-    
-    # Remove duplicates
-    unique_buttons = {}
+    # Normalize initial_content to end with a single '#'
+    # Remove trailing '#' lines
+    while initial_content and initial_content[-1].strip() == '#':
+        initial_content.pop()
+    # Add a single '#' if there were any '#' lines in initial_content
+    if any(line.strip() == '#' for line in original_content):
+        initial_content.append('#')
+
+    # Process original content to preserve comment structure
+    original_signals = []
+    current_signal = []
+    current_comments = []
+    for line in original_content[len(initial_content):]:
+        if line.strip().startswith('name:'):
+            if current_signal:
+                # Normalize comments to have a single '#'
+                normalized_comments = ['#'] if any(c.strip().startswith('#') for c in current_comments) else []
+                original_signals.append((normalized_comments, current_signal))
+                current_signal = []
+                current_comments = []
+            current_signal.append(line)
+        elif line.strip().startswith('#'):
+            current_comments.append(line)
+        else:
+            current_signal.append(line)
+    if current_signal:
+        # Normalize comments for the last signal
+        normalized_comments = ['#'] if any(c.strip().startswith('#') for c in current_comments) else []
+        original_signals.append((normalized_comments, current_signal))
+
+    # Process decoded content
+    decoded_signals = []
+    current_signal = []
+    for line in decoded_content:
+        if line.strip().startswith('name:') and current_signal:
+            decoded_signals.append(current_signal)
+            current_signal = []
+        current_signal.append(line)
+    if current_signal:
+        decoded_signals.append(current_signal)
+
+    # Remove duplicates from decoded signals
+    unique_signals = {}
     duplicates_removed = 0
-    for button in decoded_buttons:
-        if 'name' in button and 'protocol' in button and 'address' in button and 'command' in button:
-            signature = (button['name'], button['protocol'], button['address'], button['command'])
-            if signature not in unique_buttons:
-                unique_buttons[signature] = button
-            else:
-                duplicates_removed += 1
+    for signal in decoded_signals:
+        signature = tuple(line for line in signal if line.strip().startswith(('name:', 'type:', 'protocol:', 'address:', 'command:')))
+        if signature and signature not in unique_signals:
+            unique_signals[signature] = signal
+        else:
+            duplicates_removed += 1
 
-    # Reconstruct the file content
-    cleaned_content = initial_comments  # Start with the initial comments
-    
-    # Add buttons with single comment lines in between
-    for i, button in enumerate(unique_buttons.values()):
-        if i > 0:
-            cleaned_content.append('#')
-        cleaned_content.extend(button['lines'])
+    # Combine initial content, unique decoded signals, and preserved original signals
+    cleaned_content = initial_content.copy()
+    processed_names = set()
+
+    for comments, original_signal in original_signals:
+        name = next((line.split(':', 1)[1].strip() for line in original_signal if line.strip().startswith('name:')), None)
+        if name:
+            decoded_signal = next((s for s in unique_signals.values() if any(line.strip().startswith(f'name: {name}') for line in s)), None)
+            if decoded_signal:
+                # Append comments only if the last line is not already '#'
+                if comments and (not cleaned_content or cleaned_content[-1].strip() != '#'):
+                    cleaned_content.extend(comments)
+                cleaned_content.extend(decoded_signal)
+                processed_names.add(name)
+            elif name not in processed_names:
+                if comments and (not cleaned_content or cleaned_content[-1].strip() != '#'):
+                    cleaned_content.extend(comments)
+                cleaned_content.extend(original_signal)
+                processed_names.add(name)
+
+    # Add any remaining unique decoded signals with a single '#'
+    for signal in unique_signals.values():
+        name = next((line.split(':', 1)[1].strip() for line in signal if line.strip().startswith('name:')), None)
+        if name and name not in processed_names:
+            if cleaned_content and cleaned_content[-1].strip() != '#':
+                cleaned_content.append('#')  # Ensure only one '#' is added
+            cleaned_content.extend(signal)
+
+    # Remove any empty lines at the end of the file
+    while cleaned_content and cleaned_content[-1].strip() == '':
+        cleaned_content.pop()
+
+    # **Normalization Step: Replace any '# ' with '#'**
+    normalized_cleaned_content = []
+    for line in cleaned_content:
+        if line.strip() == '#':
+            normalized_cleaned_content.append('#')
+        else:
+            normalized_cleaned_content.append(line)
+    cleaned_content = normalized_cleaned_content
 
     return cleaned_content, duplicates_removed
+
+
 
 def compare_files(original_file, decoded_file):
     try:
@@ -113,7 +185,7 @@ def compare_files(original_file, decoded_file):
         diff = list(differ.compare(original_content, cleaned_content))
         
         # Calculate difference ratio
-        similarity = difflib.SequenceMatcher(None, ''.join(original_content), ''.join(cleaned_content)).ratio()
+        similarity = difflib.SequenceMatcher(None, '\n'.join(original_content), '\n'.join(cleaned_content)).ratio()
         difference_ratio = 1 - similarity
         
         # Check for lost comments
